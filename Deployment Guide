@@ -1,0 +1,83 @@
+# Guide de Déploiement : Macha sur VPS Hostinger
+
+Ce guide vous explique comment déployer votre site Macha (basé sur Vite) sur un VPS Hostinger utilisant Ubuntu et Nginx.
+
+## 1. Préparer le site localement
+
+Avant tout, vous devez générer les fichiers de production :
+
+```bash
+npm run build
+```
+Cela créera un dossier `dist/` à la racine de votre projet contenant tous les fichiers optimisés.
+
+## 2. Accéder à votre VPS
+
+Utilisez SSH pour vous connecter à votre serveur (remplacez `root` et `ip_serveur` par vos informations Hostinger) :
+
+```bash
+ssh root@votre_ip_serveur
+```
+
+## 3. Installer Nginx
+
+Si ce n'est pas déjà fait, installez le serveur web Nginx :
+
+```bash
+sudo apt update
+sudo apt install nginx
+```
+
+## 4. Transférer les fichiers
+
+Vous pouvez utiliser `SCP` ou un client comme **FileZilla** pour envoyer le contenu de votre dossier `dist/` vers le serveur.
+
+Exemple avec SCP :
+```bash
+scp -r ./dist/* root@votre_ip_serveur:/var/www/macha
+```
+
+## 5. Configurer Nginx
+
+Créez un fichier de configuration pour votre site :
+
+```bash
+sudo nano /etc/nginx/sites-available/macha
+```
+
+Collez la configuration suivante :
+
+```nginx
+server {
+    listen 80;
+    server_name votre_domaine.com; # Remplacez par votre domaine
+
+    root /var/www/macha;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+```
+
+Activez le site et redémarrez Nginx :
+
+```bash
+sudo ln -s /etc/nginx/sites-available/macha /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+## 6. Sécuriser avec SSL (HTTPS)
+
+Hostinger recommande d'utiliser **Certbot** pour obtenir un certificat SSL gratuit :
+
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d votre_domaine.com
+```
+
+## Résumé des commandes utiles
+- `sudo systemctl status nginx` : Vérifier l'état du serveur.
+- `sudo journalctl -u nginx` : Voir les logs d'erreur si le site ne s'affiche pas.
